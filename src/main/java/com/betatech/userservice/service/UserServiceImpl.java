@@ -7,10 +7,10 @@ import java.util.List;
 import javax.transaction.Transactional;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.betatech.userservice.domain.AppUser;
@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserServiceImpl implements UserService, UserDetailsService{
 	private final UserRepo userRepo;
 	private final RoleRepo roleRepo;
+	private final PasswordEncoder passwordEncoder;
 	
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -38,12 +39,13 @@ public class UserServiceImpl implements UserService, UserDetailsService{
 		Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
 		appUser.getRoles().forEach(role -> {authorities.add(new SimpleGrantedAuthority(role.getName()));
 		});
-		return new User(appUser.getUsername(), appUser.getPassword(), authorities);
+		return new org.springframework.security.core.userdetails.User(appUser.getUsername(), appUser.getPassword(), authorities);
 	}
 	
 	@Override
 	public AppUser saveUser(AppUser appUser) {
 		log.info("Saving new user {} to the database", appUser.getName());
+		appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
 		return userRepo.save(appUser);
 	}
 
